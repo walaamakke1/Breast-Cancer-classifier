@@ -18,7 +18,6 @@ from config import (
 
 
 def scan_breakhis(root, magnification=None):
-
     root = Path(root).resolve()
     if not root.is_dir():
         raise FileNotFoundError(f"Dataset folder does not exist: {root}")
@@ -45,6 +44,8 @@ def scan_breakhis(root, magnification=None):
         if magnification is not None and mag != magnification:
             continue
 
+        # Standard filename: SOB_B_A-14-22549AB-40-001.png.
+        # Exclude the subtype prefix and magnification/image number.
         pieces = path.stem.split("-")
         if len(pieces) != 5 or not pieces[0].startswith("SOB_"):
             raise ValueError(f"Unexpected BreaKHis filename: {path.name}")
@@ -71,35 +72,69 @@ def scan_breakhis(root, magnification=None):
 
 def patient_level_split(df, train_size=0.70, val_size=0.15,
                         test_size=0.15, seed=SEED):
-    
+
     if min(train_size, val_size, test_size) <= 0:
         raise ValueError("All three split fractions must be positive.")
     if not np.isclose(train_size + val_size + test_size, 1):
         raise ValueError("Split fractions must add to one.")
-    if df.groupby("patient_id")["label"].nunique().max() != 1:
-        raise ValueError("A patient has multiple subtype labels; check the data.")
-    patients = df[["patient_id", "label"]].drop_duplicates("patient_id")
+    if set(df.label) != set(range(len(CLASS_NAMES))):
+        raise ValueError("The dataset must contain all eight classes.")
+
+    # Each row is an identifier; columns indicate which labels it contains.
+    # Keep all its images together even when it has more than one subtype.
+    coverage = pd.crosstab(df.patient_id, df.label).gt(0)
+    coverage = coverage.reindex(columns=range(len(CLASS_NAMES)), fill_value=False)
+    coverage = coverage.sort_index()
+    if (coverage.sum(axis=0) < 3).any():
+        raise ValueError("Each class needs at least 3 distinct identifier groups.")
+    ids = coverage.index.to_numpy()
+    has_class = coverage.to_numpy()
+    n = len(ids)
+    n_val = max(1, round(n * val_size))
+    n_test = max(1, round(n * test_size))
+    n_train = n - n_val - n_test
+    if min(n_train, n_val, n_test) < 1:
+        raise ValueError("Not enough groups for the requested fractions.")
+
     rng = np.random.default_rng(seed)
-    split_ids = [[], [], []]
-    for label, group in patients.groupby("label", sort=True):
-        ids = rng.permutation(sorted(group.patient_id))
-        n = len(ids)
-        if n < 3:
-            raise ValueError(f"Class {label} needs at least 3 patients, found {n}.")
-        # Reserve at least one patient for training, validation and testing.
-        n_val = min(max(1, round(n * val_size)), n - 2)
-        n_test = min(max(1, round(n * test_size)), n - n_val - 1)
-        split_ids[1].extend(ids[:n_val])
-        split_ids[2].extend(ids[n_val:n_val + n_test])
-        split_ids[0].extend(ids[n_val + n_test:])
-    parts = tuple(df[df.patient_id.isin(ids)].reset_index(drop=True)
-                  for ids in split_ids)
-    validate_splits(*parts)
-    return parts
+    targets = (n_train, n_val, n_test)
+    rare_first = np.argsort(has_class.sum(axis=0), kind="stable")
+    for attempt in range(1000):
+        groups = [[], [], []]
+        available = np.ones(n, dtype=bool)
+        failed = False
+        # First ensure every split has every class. Assigned groups stay together.
+        for label in rare_first:
+            for split in rng.permutation(3):
+                if has_class[groups[split], label].any():
+                    continue
+                candidates = np.flatnonzero(available & has_class[:, label])
+                if len(candidates) == 0 or len(groups[split]) >= targets[split]:
+                    failed = True
+                    break
+                chosen = rng.choice(candidates)
+                groups[split].append(chosen)
+                available[chosen] = False
+            if failed:
+                break
+        if failed:
+            continue
+        # Randomly assign remaining groups until the requested sizes are reached.
+        remaining = rng.permutation(np.flatnonzero(available))
+        offset = 0
+        for split, target in enumerate(targets):
+            count = target - len(groups[split])
+            groups[split].extend(remaining[offset:offset + count])
+            offset += count
+        parts = tuple(df[df.patient_id.isin(ids[index])].reset_index(drop=True)
+                      for index in groups)
+        validate_splits(*parts)
+        return parts
+    raise ValueError("Could not form splits containing every class. "
+                     "Inspect class/group counts or adjust split fractions.")
 
 
 def validate_splits(train_df, val_df, test_df):
-
     parts = (train_df, val_df, test_df)
     groups = [set(part.patient_id) for part in parts]
     for i, j in [(0, 1), (0, 2), (1, 2)]:
@@ -118,7 +153,6 @@ def load_splits(split_dir):
 
 
 def get_transforms(augment=False):
-
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
         std=[0.229, 0.224, 0.225],
