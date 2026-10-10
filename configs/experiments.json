@@ -1,0 +1,886 @@
+{
+  "defaults": {
+    "task": "subtype",
+    "img_size": 224,
+    "magnifications": null,
+    "batch_size": 64,
+    "num_workers": 2,
+    "epochs": 30,
+    "patience": 10,
+    "optimizer": "adam",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "momentum": 0.9,
+    "scheduler": "none",
+    "augmentation": "basic",
+    "mixup": 0.0,
+    "cutmix": 0.0,
+    "balance": "sampler",
+    "loss": "ce",
+    "label_smoothing": 0.0,
+    "train_fraction": 1.0,
+    "monitor": "val_bal_acc",
+    "seed": 42,
+    "amp": true,
+    "model": {
+      "name": "simple_cnn",
+      "channels": [
+        32,
+        64,
+        128
+      ],
+      "kernel_size": 3,
+      "stride": 1,
+      "padding": null,
+      "batch_norm": false,
+      "dropout": 0.3,
+      "hidden_units": null,
+      "activation": "relu"
+    }
+  },
+  "experiments": [
+    {
+      "id": "t1_baseline",
+      "group": "task1",
+      "description": "Baseline 3-block CNN (3x3, no BN), Adam 1e-3, basic aug, balanced sampler"
+    },
+    {
+      "id": "t2a_depth2",
+      "group": "task2_arch",
+      "description": "2 conv blocks (shallower)",
+      "model": {
+        "channels": [
+          32,
+          64
+        ]
+      }
+    },
+    {
+      "id": "t2a_depth4",
+      "group": "task2_arch",
+      "description": "4 conv blocks (deeper)",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ]
+      }
+    },
+    {
+      "id": "t2a_depth5",
+      "group": "task2_arch",
+      "description": "5 conv blocks (deepest)",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256,
+          512
+        ]
+      }
+    },
+    {
+      "id": "t2a_kernel5",
+      "group": "task2_arch",
+      "description": "5x5 kernels",
+      "model": {
+        "kernel_size": 5
+      }
+    },
+    {
+      "id": "t2a_kernel7",
+      "group": "task2_arch",
+      "description": "7x7 kernels",
+      "model": {
+        "kernel_size": 7
+      }
+    },
+    {
+      "id": "t2a_stride2",
+      "group": "task2_arch",
+      "description": "stride-2 convolutions (bigger receptive field, 4x less compute)",
+      "model": {
+        "stride": 2
+      }
+    },
+    {
+      "id": "t2a_padding0",
+      "group": "task2_arch",
+      "description": "no padding ('valid' convolutions)",
+      "model": {
+        "padding": 0
+      }
+    },
+    {
+      "id": "t2a_batchnorm",
+      "group": "task2_arch",
+      "description": "baseline + BatchNorm",
+      "model": {
+        "batch_norm": true
+      }
+    },
+    {
+      "id": "t2a_fc_head",
+      "group": "task2_arch",
+      "description": "baseline + hidden linear layer (256)",
+      "model": {
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2a_combined",
+      "group": "task2_arch",
+      "description": "4 blocks + BatchNorm + 256 hidden FC (also = Adam lr 1e-3 in the optimizer grid)",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      },
+      "also_in": [
+        "task2_optim"
+      ]
+    },
+    {
+      "id": "t2o_sgd_lr1e-2",
+      "group": "task2_optim",
+      "description": "SGD lr=0.01, no scheduler",
+      "optimizer": "sgd",
+      "lr": 0.01,
+      "weight_decay": 0.0001,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_sgd_lr1e-3",
+      "group": "task2_optim",
+      "description": "SGD lr=0.001, no scheduler",
+      "optimizer": "sgd",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_sgd_lr1e-4",
+      "group": "task2_optim",
+      "description": "SGD lr=0.0001, no scheduler",
+      "optimizer": "sgd",
+      "lr": 0.0001,
+      "weight_decay": 0.0001,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_adam_lr1e-2",
+      "group": "task2_optim",
+      "description": "ADAM lr=0.01, no scheduler",
+      "optimizer": "adam",
+      "lr": 0.01,
+      "weight_decay": 0.0001,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_adam_lr1e-4",
+      "group": "task2_optim",
+      "description": "ADAM lr=0.0001, no scheduler",
+      "optimizer": "adam",
+      "lr": 0.0001,
+      "weight_decay": 0.0001,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_adamw_lr1e-2",
+      "group": "task2_optim",
+      "description": "ADAMW lr=0.01, no scheduler",
+      "optimizer": "adamw",
+      "lr": 0.01,
+      "weight_decay": 0.01,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_adamw_lr1e-3",
+      "group": "task2_optim",
+      "description": "ADAMW lr=0.001, no scheduler",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2o_adamw_lr1e-4",
+      "group": "task2_optim",
+      "description": "ADAMW lr=0.0001, no scheduler",
+      "optimizer": "adamw",
+      "lr": 0.0001,
+      "weight_decay": 0.01,
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2s_step",
+      "group": "task2_sched",
+      "description": "AdamW 1e-3 + step LR scheduler",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "step",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2s_cosine",
+      "group": "task2_sched",
+      "description": "REFERENCE scratch CNN: combined arch, AdamW 1e-3 + cosine, basic aug, balanced sampler",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      },
+      "also_in": [
+        "task2_aug",
+        "task2_balance",
+        "task3_transfer",
+        "task3_efficiency"
+      ]
+    },
+    {
+      "id": "t2s_plateau",
+      "group": "task2_sched",
+      "description": "AdamW 1e-3 + plateau LR scheduler",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "plateau",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2aug_none",
+      "group": "task2_aug",
+      "description": "no augmentation",
+      "augmentation": "none",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2aug_strong",
+      "group": "task2_aug",
+      "description": "basic + random-resized-crop + affine + colour jitter",
+      "augmentation": "strong",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2aug_mixup",
+      "group": "task2_aug",
+      "description": "strong + MixUp (alpha 0.2)",
+      "augmentation": "strong",
+      "mixup": 0.2,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2aug_cutmix",
+      "group": "task2_aug",
+      "description": "strong + CutMix (alpha 1.0)",
+      "augmentation": "strong",
+      "cutmix": 1.0,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2bal_none",
+      "group": "task2_balance",
+      "description": "no balancing (plain CE, shuffled loader)",
+      "balance": "none",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2bal_weighted_loss",
+      "group": "task2_balance",
+      "description": "inverse-frequency class weights in CE",
+      "balance": "loss_weights",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t2bal_focal",
+      "group": "task2_balance",
+      "description": "focal loss (gamma 2), no sampler",
+      "balance": "none",
+      "loss": "focal",
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      }
+    },
+    {
+      "id": "t3_resnet18_frozen",
+      "group": "task3_transfer",
+      "description": "resnet18 ImageNet: frozen backbone, train head only (feature extraction)",
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "also_in": [
+        "task3_efficiency"
+      ]
+    },
+    {
+      "id": "t3_resnet18_partial",
+      "group": "task3_transfer",
+      "description": "resnet18 ImageNet: unfreeze last block, backbone LR x0.1",
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "partial",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3_resnet18_full",
+      "group": "task3_transfer",
+      "description": "resnet18 ImageNet: fine-tune whole network, backbone LR x0.1",
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "also_in": [
+        "task3_efficiency"
+      ]
+    },
+    {
+      "id": "t3_resnet50_frozen",
+      "group": "task3_transfer",
+      "description": "resnet50 ImageNet: frozen backbone, train head only (feature extraction)",
+      "model": {
+        "name": "resnet50",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3_resnet50_full",
+      "group": "task3_transfer",
+      "description": "resnet50 ImageNet: fine-tune whole network, backbone LR x0.1",
+      "model": {
+        "name": "resnet50",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3_efficientnet_b0_frozen",
+      "group": "task3_transfer",
+      "description": "efficientnet_b0 ImageNet: frozen backbone, train head only (feature extraction)",
+      "model": {
+        "name": "efficientnet_b0",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3_efficientnet_b0_full",
+      "group": "task3_transfer",
+      "description": "efficientnet_b0 ImageNet: fine-tune whole network, backbone LR x0.1",
+      "model": {
+        "name": "efficientnet_b0",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": true,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3_convnext_tiny_frozen",
+      "group": "task3_transfer",
+      "description": "convnext_tiny ImageNet: frozen backbone, train head only (feature extraction)",
+      "model": {
+        "name": "convnext_tiny",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": false,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3_convnext_tiny_full",
+      "group": "task3_transfer",
+      "description": "convnext_tiny ImageNet: fine-tune whole network, backbone LR x0.1",
+      "model": {
+        "name": "convnext_tiny",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "active": false,
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3eff_scratch_10",
+      "group": "task3_efficiency",
+      "description": "scratch CNN on 10% of train images",
+      "train_fraction": 0.1,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      },
+      "epochs": 30
+    },
+    {
+      "id": "t3eff_resnet18_frozen_10",
+      "group": "task3_efficiency",
+      "description": "resnet18 frozen on 10% of train images",
+      "train_fraction": 0.1,
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3eff_resnet18_full_10",
+      "group": "task3_efficiency",
+      "description": "resnet18 full on 10% of train images",
+      "train_fraction": 0.1,
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3eff_scratch_25",
+      "group": "task3_efficiency",
+      "description": "scratch CNN on 25% of train images",
+      "train_fraction": 0.25,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      },
+      "epochs": 30
+    },
+    {
+      "id": "t3eff_resnet18_frozen_25",
+      "group": "task3_efficiency",
+      "description": "resnet18 frozen on 25% of train images",
+      "train_fraction": 0.25,
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3eff_resnet18_full_25",
+      "group": "task3_efficiency",
+      "description": "resnet18 full on 25% of train images",
+      "train_fraction": 0.25,
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3eff_scratch_50",
+      "group": "task3_efficiency",
+      "description": "scratch CNN on 50% of train images",
+      "train_fraction": 0.5,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine",
+      "model": {
+        "channels": [
+          32,
+          64,
+          128,
+          256
+        ],
+        "batch_norm": true,
+        "hidden_units": 256
+      },
+      "epochs": 30
+    },
+    {
+      "id": "t3eff_resnet18_frozen_50",
+      "group": "task3_efficiency",
+      "description": "resnet18 frozen on 50% of train images",
+      "train_fraction": 0.5,
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "frozen",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    {
+      "id": "t3eff_resnet18_full_50",
+      "group": "task3_efficiency",
+      "description": "resnet18 full on 50% of train images",
+      "train_fraction": 0.5,
+      "model": {
+        "name": "resnet18",
+        "pretrained": true,
+        "mode": "full",
+        "unfreeze_blocks": 1,
+        "dropout": 0.2,
+        "hidden_units": null,
+        "backbone_lr_mult": 0.1
+      },
+      "epochs": 15,
+      "patience": 6,
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    }
+  ]
+}
