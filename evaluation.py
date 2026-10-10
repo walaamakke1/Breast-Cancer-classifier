@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from PIL import Image
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import balanced_accuracy_score, classification_report, confusion_matrix
 
 import config
 from breakhis_data import get_transforms
@@ -23,6 +23,7 @@ def load_checkpoint(path, device=None):
 
 @torch.no_grad()
 def predict_images(model, images, ckpt, device=None):
+    
     device = device or next(model.parameters()).device
     tf = get_transforms("none", ckpt["img_size"], ckpt["mean"], ckpt["std"], train=False)
     batch = []
@@ -65,12 +66,29 @@ def test_report(model, loader, info, device=None):
         pred=("pred", lambda s: s.value_counts().index[0]))
     patient_acc = float((patient_vote["target"] == patient_vote["pred"]).mean())
 
+    # Derived benign vs malignant result: merge the 8 subtypes into 2 classes.
+    # Subtypes 0-3 (A, F, PT, TA) are benign, 4-7 (DC, LC, MC, PC) are malignant.
+    binary = {}
+    if num_classes == len(config.SUBTYPES):
+        is_malignant = [s not in config.BENIGN_SUBTYPES for s in config.SUBTYPES]
+        t_bin = np.array([is_malignant[t] for t in targets], dtype=int)
+        p_bin = np.array([is_malignant[p] for p in preds], dtype=int)
+        cm_bin = confusion_matrix(t_bin, p_bin, labels=[0, 1])
+        binary = {
+            "test_binary_acc": float((t_bin == p_bin).mean()),
+            "test_binary_bal_acc": float(balanced_accuracy_score(t_bin, p_bin)),
+            "test_binary_sensitivity": float(cm_bin[1, 1] / max(cm_bin[1].sum(), 1)),  # malignant found
+            "test_binary_specificity": float(cm_bin[0, 0] / max(cm_bin[0].sum(), 1)),  # benign found
+            "binary_confusion_matrix": cm_bin.tolist(),
+        }
+
     return {
         "test_loss": metrics["loss"], "test_acc": metrics["acc"], "test_bal_acc": metrics["bal_acc"],
         "test_macro_f1": metrics["macro_f1"],
         "test_per_class_acc": dict(zip(names, metrics["per_class_acc"])),
         "test_acc_per_magnification": {f"{int(k)}X": float(v) for k, v in per_mag.items()},
         "test_patient_acc": patient_acc,
+        **binary,
         "confusion_matrix": cm.tolist(), "confusion_matrix_normalized": cm_norm.round(4).tolist(),
         "classification_report": classification_report(
             targets, preds, labels=list(range(num_classes)), target_names=names, zero_division=0,
@@ -101,5 +119,6 @@ def results_table(results_list):
             "epochs to 90% best": r["epochs_to_90pct_best"],
             "test acc": r["test_acc"], "test bal acc": r["test_bal_acc"], "test macro F1": r["test_macro_f1"],
             "test patient acc": r["test_patient_acc"],
+            "benign/malignant acc": r.get("test_binary_acc"),
         })
     return pd.DataFrame(rows)
